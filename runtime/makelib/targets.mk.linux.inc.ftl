@@ -109,7 +109,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
     <#elseif uma.spec.processor.x86>
       UMA_OPTIMIZATION_CFLAGS += -O3 -fno-strict-aliasing -march=pentium4 -mtune=prescott -mpreferred-stack-boundary=4
     <#elseif uma.spec.processor.arm>
-      UMA_OPTIMIZATION_CFLAGS += -g -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
+      UMA_OPTIMIZATION_CFLAGS += -g3 -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
     <#elseif uma.spec.processor.ppc>
       UMA_OPTIMIZATION_CFLAGS += -O3
       <#if uma.spec.flags.env_gcc.enabled>
@@ -135,7 +135,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
     <#elseif uma.spec.processor.x86>
       UMA_OPTIMIZATION_CXXFLAGS += -O3 -fno-strict-aliasing -march=pentium4 -mtune=prescott -mpreferred-stack-boundary=4
     <#elseif uma.spec.processor.arm>
-      UMA_OPTIMIZATION_CXXFLAGS += -g -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
+      UMA_OPTIMIZATION_CXXFLAGS += -g3 -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
     <#elseif uma.spec.processor.ppc>
       UMA_OPTIMIZATION_CXXFLAGS += -O3
       <#if uma.spec.flags.env_gcc.enabled>
@@ -238,11 +238,11 @@ ASFLAGS += -noexecstack
 </#if>
 
 ifdef j9vm_uma_gnuDebugSymbols
-  CFLAGS += -g
-  CXXFLAGS += -g
+  CFLAGS += -g3
+  CXXFLAGS += -g3
   <#if uma.spec.processor.ppc>
     ifdef USE_PPC_GCC
-      PPC_GCC_CXXFLAGS += -g
+      PPC_GCC_CXXFLAGS += -g3
     endif
   </#if>
   <#if uma.spec.processor.x86 || uma.spec.processor.amd64>
