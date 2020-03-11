@@ -346,7 +346,7 @@ def archive_sdk() {
                                        "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                     specs.add(javadocSpec)
                 }
-                def 
+               // def 
                 def uploadFiles =   [files : specs]
                 def uploadSpec = JsonOutput.toJson(uploadFiles)
                 upload_artifactory(uploadSpec)
