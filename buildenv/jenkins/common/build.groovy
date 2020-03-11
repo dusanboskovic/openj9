@@ -323,7 +323,8 @@ def archive_sdk() {
             }
             //include the OpenJ9 source job if option is selected
             if (params.INCLUDE_J9_SOURCE){
-                sh "cp -r openj9/runtime ${buildDir}${sourceDir}"
+                sh "cp -r openj9/runtime/* ${buildDir}${sourceDir}"
+                echo "Source path: ${buildDir}${sourceDir}"
             }
             if (ARTIFACTORY_SERVER) {
                 def specs = []
@@ -345,6 +346,7 @@ def archive_sdk() {
                                        "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                     specs.add(javadocSpec)
                 }
+                def 
                 def uploadFiles =   [files : specs]
                 def uploadSpec = JsonOutput.toJson(uploadFiles)
                 upload_artifactory(uploadSpec)

@@ -79,7 +79,6 @@
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
  *   SUMMARY_AUTO_REFRESH_TIME: String - the downstream summary badge auto-refresh time [in minutes], default: 5
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
- *   INCLUDE_J9_SOURCE: Boolean - flag to include OpenJ9 and OMR source in the SDK artifact
  */
 
 CURRENT_RELEASES = ['8', '11', '14', 'next']
