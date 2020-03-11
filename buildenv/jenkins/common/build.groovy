@@ -283,6 +283,8 @@ def archive_sdk() {
         def buildDir = "build/${RELEASE}/images/"
         def debugImageDir = "debug-image"
         def testDir = "test"
+        def sourceDir = "${JDK_FOLDER}/jre/lib/amd64/compressedrefs/"
+        //TODO: fix the sourcedir to be compatible with every platform
 
         dir(OPENJDK_CLONE_DIR) {
             sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
@@ -318,6 +320,10 @@ def archive_sdk() {
                         sh "tar -C ${extractDir} -zcvf ${JAVADOC_FILENAME} ${javadocDir}"
                     }
                 }
+            }
+            //include the OpenJ9 source job if option is selected
+            if (params.INCLUDE_J9_SOURCE){
+                sh "cp -r openj9/runtime ${buildDir}${sourceDir}"
             }
             if (ARTIFACTORY_SERVER) {
                 def specs = []

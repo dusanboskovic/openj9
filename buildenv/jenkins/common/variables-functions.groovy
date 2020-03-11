@@ -824,6 +824,10 @@ def set_job_variables(job_type) {
     ARCHIVE_JAVADOC = (params.ARCHIVE_JAVADOC) ? params.ARCHIVE_JAVADOC : false
     echo "Using ARCHIVE_JAVADOC = ${ARCHIVE_JAVADOC}"
 
+    //set INCLUDE_J9_SOURCE flag
+    INCLUDE_J9_SOURCE = (params.INCLUDE_J9_SOURCE) ? params.INCLUDE_J9_SOURCE : false
+    echo "Using INCLUDE_J9_SOURCE = ${INCLUDE_J9_SOURCE}"
+
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
