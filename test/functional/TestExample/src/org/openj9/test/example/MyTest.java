@@ -46,6 +46,7 @@ public class MyTest {
         Properties properties = new Properties();
 
         properties = J9JavaVMHelper.getSystemProperties(DTFJContext.getVm());
-        String vmname = (String) properties.get("java.vm.name");
+		String vmname = (String) properties.get("java.vm.name");
+		System.out.println("This is the vmname" + vmname);
     }
 }

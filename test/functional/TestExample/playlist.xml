@@ -26,7 +26,7 @@
 	<test>
 		<testCaseName>testExample</testCaseName>
 		<variations>
-			<variation>-Xint</variation>
+	
 		</variations>
 		<command>$(JAVA_COMMAND) -Xdump:system:events=vmstop -version; \
 			false; \
