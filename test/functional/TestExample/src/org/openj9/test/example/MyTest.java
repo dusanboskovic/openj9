@@ -25,6 +25,11 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
+import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
+import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
+import java.util.Properties;
+
+/*
 @Test(groups={ "level.extended" })
 public class MyTest {
 
@@ -34,4 +39,13 @@ public class MyTest {
 		logger.info("running aTestExample: INFO and above level logging enabled");
 		AssertJUnit.assertEquals(4, 2+2);
 	}
+}
+*/
+public class MyTest {
+    public static void main(String[] args) {
+        Properties properties = new Properties();
+
+        properties = J9JavaVMHelper.getSystemProperties(DTFJContext.getVm());
+        String vmname = (String) properties.get("java.vm.name");
+    }
 }
