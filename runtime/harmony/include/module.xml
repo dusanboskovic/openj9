@@ -22,8 +22,17 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<module>
-	<artifact type="reference" name="harmony_include">
-		<include-if condition="spec.flags.opt_harmony" />
-	</artifact>
-</module>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Java14andUp suite" parallel="none" verbose="2">
+    <test name="Jep359Tests">
+        <classes>
+            <class name="org.openj9.test.java.lang.Test_Class"/>
+            <class name="org.openj9.test.records.RecordClassTests" />
+        </classes>
+    </test>
+    <test name="ThreadInterruptImplTest">
+        <classes>
+            <class name="org.openj9.test.java.lang.Test_Thread"/>
+        </classes>
+    </test>
+</suite>
