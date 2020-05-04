@@ -25,9 +25,12 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
+import j9vm.test.ddrext.util.parser.ClassForNameOutputParser;
+import j9vm.test.ddrext.DDRExtTesterBase;
 import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 import java.util.Properties;
+import j9vm.test.ddrext.Constants;
 
 /*
 @Test(groups={ "level.extended" })
@@ -43,10 +46,22 @@ public class MyTest {
 */
 public class MyTest {
     public static void main(String[] args) {
-        Properties properties = new Properties();
+		private static final String JAVA_LANG_SYSTEM = "java/lang/System";
+		private static final String SYSTEMPROPERTIES = "systemProperties";
 
-        properties = J9JavaVMHelper.getSystemProperties(DTFJContext.getVm());
+		String classForName = exec(Constants.CL_FOR_NAME_CMD, JAVA_LANG_SYSTEM);
+		// may need to use the other classforname parser if there is more than one class that it outputted for this command
+		String classForNameAddress = ClassForNameOutputParser.extractClassAddress(classForName);
+		String j9Statics = exec(Constants.J9STATICS_CMD, new String[] { classForNameAddress });
+		String j9StaticsAddress = ParserUtil.getFieldAddressOrValue(SYSTEMPROPERTIES, Constants.J9OBJECT_CMD ,j9Statics);
+		String systemPropertiesObject = exec(Constants.J9OBJECT_CMD, j9StaticsAddress);
+
+		/*
+		Properties properties = new Properties();
+		properties = J9JavaVMHelper.getSystemProperties(DTFJContext.getVm());
 		String vmname = (String) properties.get("java.vm.name");
+		*/
+		String vmname = (String) systemPropertiesObject.get("java.vm.name");
 		System.out.println("This is the vmname" + vmname);
     }
 }
