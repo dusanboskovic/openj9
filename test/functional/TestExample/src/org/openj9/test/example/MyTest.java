@@ -27,8 +27,8 @@ import org.testng.log4testng.Logger;
 
 import j9vm.test.ddrext.util.parser.ClassForNameOutputParser;
 import j9vm.test.ddrext.DDRExtTesterBase;
-import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
-import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
+//import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
+//import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 import java.util.Properties;
 import j9vm.test.ddrext.Constants;
 
@@ -61,7 +61,7 @@ public class MyTest {
 		properties = J9JavaVMHelper.getSystemProperties(DTFJContext.getVm());
 		String vmname = (String) properties.get("java.vm.name");
 		*/
-		String vmname = (String) systemPropertiesObject.get("java.vm.name");
-		System.out.println("This is the vmname" + vmname);
+		//String vmname = (String) systemPropertiesObject.get("java.vm.name");
+		//System.out.println("This is the vmname" + vmname);
     }
 }
