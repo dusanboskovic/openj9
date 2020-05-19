@@ -1,4 +1,4 @@
-/*******************************************************************************
+*******************************************************************************
  * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
@@ -1033,6 +1033,8 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	if (0 != result) {
 		freeJavaVM(vm);
 	}
+	
+	abort();
 
 	return (jint)result;
 
