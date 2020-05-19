@@ -1034,6 +1034,8 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 		freeJavaVM(vm);
 	}
 
+	abort();
+	
 	return (jint)result;
 
 }
