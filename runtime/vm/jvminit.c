@@ -1,4 +1,4 @@
-*******************************************************************************
+/*******************************************************************************
  * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
