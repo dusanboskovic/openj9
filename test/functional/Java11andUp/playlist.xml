@@ -173,7 +173,11 @@
 			<variation>-Xgcpolicy:balanced</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+<<<<<<< HEAD
 			-cp $(Q)$(LIB_DIR)$(D)asm-7.2.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+=======
+			-cp $(Q)$(LIB_DIR)$(D)asm-8.0.1.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+>>>>>>> f24de3bdf4... Upgrade ASM version to 8.0.1
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
@@ -205,7 +209,11 @@
 			<variation>-Xgcpolicy:metronome</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+<<<<<<< HEAD
 			-cp $(Q)$(LIB_DIR)$(D)asm-7.2.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+=======
+			-cp $(Q)$(LIB_DIR)$(D)asm-8.0.1.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+>>>>>>> f24de3bdf4... Upgrade ASM version to 8.0.1
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
@@ -237,7 +245,11 @@
 			<variation>-Xgcpolicy:metronome</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+<<<<<<< HEAD
 			-cp $(Q)$(LIB_DIR)$(D)asm-7.2.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+=======
+			-cp $(Q)$(LIB_DIR)$(D)asm-8.0.1.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+>>>>>>> f24de3bdf4... Upgrade ASM version to 8.0.1
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \

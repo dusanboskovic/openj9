@@ -26,5 +26,9 @@ ASM_JAR=$(LIB_DIR)$(D)asm-all.jar
 # if JDK_VERSION is not 8
 ifeq ($(filter 8, $(JDK_VERSION)),)
  ADD_EXPORTS=--add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED
+<<<<<<< HEAD
  ASM_JAR=$(LIB_DIR)$(D)asm-7.2.jar
+=======
+ ASM_JAR=$(LIB_DIR)$(D)asm-8.0.1.jar
+>>>>>>> f24de3bdf4... Upgrade ASM version to 8.0.1
 endif
