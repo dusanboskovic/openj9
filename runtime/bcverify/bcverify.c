@@ -920,6 +920,20 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 					J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
 					stackIndex, target, target,
 					liveStack->stackTopIndex, targetStack->stackTopIndex);
+			
+			printf("----------- mergeStacks : About to throw Trc_BCV_mergeStacks_DepthMismatch verifyError\n");
+			
+			printf("----------- mergeStacks : className %.*s methodName %.*s signature : %.*s, stackIndex=0x%x target=0x%x liveStack->stackTopIndex=0x%x, targetStack->stackTopIndex=0x%x verifyData=%p\n", 
+				(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
+				J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
+				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),
+				J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)),
+				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)),
+				J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
+				stackIndex, target, liveStack->stackTopIndex, targetStack->stackTopIndex, verifyData);
+			printf("------------------------------ Crashing ...................\n");
+			*((UDATA *)-1) = 0x321;
+			
 			goto _finished;
 		}
 
@@ -2174,6 +2188,10 @@ bcvalloc (J9BytecodeVerificationData * verifyData, UDATA byteCount)
 		temp2->prev = temp1;
 		verifyData->currentAlloc = (UDATA *) temp2;
 		returnVal = temp1->data;
+	}
+	if (returnVal != 0) {
+		// xxxxxxxxxxx possible fix?
+		memset(returnVal, 0, byteCount);	
 	}
 	return returnVal;
 }
