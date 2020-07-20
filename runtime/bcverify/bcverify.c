@@ -85,6 +85,25 @@ static IDATA simulateStack (J9BytecodeVerificationData * verifyData);
 
 static IDATA parseOptions (J9JavaVM *vm, char *optionValues, char **errorString);
 static IDATA setVerifyState ( J9JavaVM *vm, char *option, char **errorString );
+
+static void
+xBytes(void * address, IDATA length, UDATA index, UDATA x) {
+	U_8 * tmp = (U_8 *) address;
+	IDATA i = 0;
+	if(!x) return;
+	printf("\n--------------------------------xBytes zzz %d\n", index);	
+	printf("xBytes : Printing from address %p for %d bytes in BIG ENDIAN", address, length);
+	for(; i < length; i++) {
+		if (0 == (i % (8 * 4))) {
+			printf("\n%08X : ", i);
+		} else if (0 == i % 4) {
+			printf(" ");
+		}
+		printf("%02X", *(tmp + i));
+	}
+	printf("\n--------------------------------\n\n");
+}
+
 static void
 printBytes(void * address, IDATA length)
 {
@@ -956,10 +975,13 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 	UDATA x = 0;
 
 	if (0 == strncmp(J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)), "org/bouncycastle/jce/provider/BouncyCastleProvider", 50) && 0 == strncmp(J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)), "setParameter", 12)) x=1;
-
+	xBytes(verifyData->stackMaps, 0x40, 1000, x);
 	stackIndex = bytecodeMap[target] >> BRANCH_INDEX_SHIFT;
+	xBytes(verifyData->stackMaps, 0x40, 1001, x);
 	targetStack = BCV_INDEX_STACK (stackIndex);
+	xBytes(verifyData->stackMaps, 0x40, 1002, x);
 	if(x) {
+		printf("m0.\tverifyData->stackMaps=%p target=%d stackIndex=%d targetStack=%p\n", verifyData->stackMaps, target, stackIndex, targetStack);
 		printf("m1.\tromClass=%p romMethod=%p maxIndex=0x%x bytecodeMap=%p liveStack=%p J9_ARG_COUNT_FROM_ROM_METHOD(romMethod)=0x%x J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod)=0x%x targetStack->stackBaseIndex=%d\n", 
 		              romClass,  romMethod,  maxIndex,     bytecodeMap,   liveStack,    J9_ARG_COUNT_FROM_ROM_METHOD(romMethod),     J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod), targetStack->stackBaseIndex);
 	}
@@ -972,6 +994,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 			J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
 			target, target);
 
+	xBytes(verifyData->stackMaps, 0x40, 1003, x);
 	if (targetStack->stackBaseIndex == -1) {
 
 		/* Target location does not have a stack, so give the target our current stack */
@@ -997,6 +1020,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 		UDATA mergePC = (UDATA) -1;
 		U_32 resultArrayBase;
 
+		xBytes(verifyData->stackMaps, 0x40, 1004, x);
 		/* Check stack size equality */
 		if (targetStack->stackTopIndex != liveStack->stackTopIndex) {
 			rc = BCV_FAIL;
@@ -1020,6 +1044,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)),
 				J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 				stackIndex, target, liveStack->stackTopIndex, targetStack->stackTopIndex, verifyData);
+			xBytes(verifyData->stackMaps, 0x40, 1005, x);
 			printf("------------------------------ Crashing ...................\n");
 			*((UDATA *)-1) = 0x321;
 			
@@ -1472,7 +1497,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 	UDATA errorStackIndex = (UDATA)-1;
 	UDATA errorTempData = (UDATA)-1;
 	UDATA x = 0;	
-
+	xBytes(verifyData->stackMaps, 0x40, 100, x);
 	Trc_BCV_simulateStack_Entry(verifyData->vmStruct);
 
 	if (0 == strncmp(J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)), "org/bouncycastle/jce/provider/BouncyCastleProvider", 50) && 0 == strncmp(J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)), "setParameter", 12)) x=1;
@@ -1497,17 +1522,21 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 	 * to avoid storing garbage data type in the error message buffer
 	 * when stack underflow occurs.
 	 */
+	 xBytes(verifyData->stackMaps, 0x40, 101, x);
 	liveStack->stackElements[liveStack->stackBaseIndex] = BCV_BASE_TYPE_TOP;
-
+	xBytes(verifyData->stackMaps, 0x40, 102, x);
 	RELOAD_LIVESTACK;
-
+	xBytes(verifyData->stackMaps, 0x40, 103, x);
 	bcIndex = code;
 
 	constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
 	if(x) printf("\ts1. bcIndex = code=%p, constantPool=%p\n", bcIndex, constantPool);
+	xBytes(verifyData->stackMaps, 0x40, 104, x);
 	while (pc < length) {
+		xBytes(verifyData->stackMaps, 0x40, 105, x);
 		if(x) printf("\ts2.pc(0x%x) < length(0x%x)\n", pc, length);	
 		if ((UDATA) (stackTop - stackBase) > maxStack) {
+			xBytes(verifyData->stackMaps, 0x40, 106, x);
 			if(x) printf("\ts3.(stackTop(%p) - stackBase(%p)) > maxStack(0x%x)\n", stackTop, stackBase, maxStack);	
 			errorType = J9NLS_BCV_ERR_STACK_OVERFLOW__ID;
 			verboseErrorCode = BCV_ERR_STACK_OVERFLOW;
@@ -1520,25 +1549,29 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		/*  copy the existing stack shape into the exception stack */
 		if ((bytecodeMap[pc] & BRANCH_EXCEPTION_START) || (justLoadedStack && checkIfInsideException)) {
 			if(x) printf("\ts5.(bytecodeMap[%d](0x%x) & BRANCH_EXCEPTION_START(0x%x)) || (justLoadedStack(%d) && checkIfInsideException(%d))\n", pc, bytecodeMap[pc], BRANCH_EXCEPTION_START, justLoadedStack, checkIfInsideException);
+			xBytes(verifyData->stackMaps, 0x40, 107, x);
 			handler = J9EXCEPTIONINFO_HANDLERS(exceptionData);
 			SAVE_STACKTOP(liveStack, stackTop);
-
+			xBytes(verifyData->stackMaps, 0x40, 108, x);
 			/* Save the current liveStack element zero */
 			/* Reset the stack pointer to push the exception on the empty stack */
 			originalStackTop = stackTop;
 			originalStackZeroEntry = liveStack->stackElements[liveStack->stackBaseIndex];
+			xBytes(verifyData->stackMaps, 0x40, 109, x);
 			if(x) printf("\ts6.originalStackTop = stackTop=%p originalStackZeroEntry=0x%x liveStack->stackElements[%d]=0x%x\n", originalStackTop, originalStackZeroEntry, liveStack->stackBaseIndex, liveStack->stackElements[liveStack->stackBaseIndex]);
 			for (exception = 0; exception < (UDATA) exceptionData->catchCount; exception++) {
 				if(x) printf("\ts7.exception=%d exceptionData->catchCount=%d\n", exception, exceptionData->catchCount);
-			
+				xBytes(verifyData->stackMaps, 0x40, 110, x);
 				/* find the matching branch target, and copy/merge the stack with the exception object */
 				if ((pc >= handler->startPC) && (pc < handler->endPC)) {
 #ifdef DEBUG_BCV
 					printf("exception startPC: %d\n", handler->startPC);
 #endif
+					xBytes(verifyData->stackMaps, 0x40, 111, x);
 					if(x) printf("\ts8.(pc(0x%x) >= handler->startPC(0x%x)) && (pc(0x%x) < handler->endPC(0x%x))\n", pc, handler->startPC, pc < handler->endPC);
 					stackIndex = bytecodeMap[handler->handlerPC] >> BRANCH_INDEX_SHIFT;
 					branch = BCV_INDEX_STACK (stackIndex);
+					xBytes(verifyData->stackMaps, 0x40, 112, x);
 					if(x) printf("\ts9. stackIndex(0x%x) = bytecodeMap[%d](0x%x) >> BRANCH_INDEX_SHIFT(0x%x)\n", stackIndex, handler->handlerPC, bytecodeMap[handler->handlerPC], BRANCH_INDEX_SHIFT);
 					/* "push" the exception object */
 					classIndex = BCV_JAVA_LANG_THROWABLE_INDEX;
@@ -1549,14 +1582,16 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 						if(x) printf("\ts11. utf8string=%p constantPool=%p, handler->exceptionClassIndex=%d\n", utf8string, constantPool, handler->exceptionClassIndex);
 						classIndex = findClassName(verifyData, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string));
 						if(x) printf("\ts12. handler->exceptionClassIndex=%d utf8string=%p classIndex=0x%x\n", handler->exceptionClassIndex, utf8string, classIndex);
+						xBytes(verifyData->stackMaps, 0x40, 114, x);
 					}
-
+					xBytes(verifyData->stackMaps, 0x40, 115, x);
 					/* Empty the stack */
 					stackTop = &(liveStack->stackElements[liveStack->stackBaseIndex]);
+					xBytes(verifyData->stackMaps, 0x40, 116, x);
 					if(x) printf("\ts13. stackTop=%p liveStack=%p classIndex=0x%x BCV_CLASS_INDEX_SHIFT=%d\n", stackTop, liveStack, classIndex, BCV_CLASS_INDEX_SHIFT);
 					PUSH(classIndex << BCV_CLASS_INDEX_SHIFT);
 					SAVE_STACKTOP(liveStack, stackTop);
-					
+					xBytes(verifyData->stackMaps, 0x40, 117, x);
 					if(x) printf("\ts14. before calling mergeStacks (verifyData(%p), handler->handlerPC(0x%x)), handle=%p\n", verifyData, handler->handlerPC, handler);
 					if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, handler->handlerPC)) {
 						errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
@@ -1564,28 +1599,37 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 						goto _outOfMemoryError;
 					}
 					if(x) printf("\ts16.\n");
+					xBytes(verifyData->stackMaps, 0x40, 118, x);
 				}
 				handler++;
 				if(x) printf("\ts17. handler=%p\n", handler);
+				xBytes(verifyData->stackMaps, 0x40, 119, x);
 			}
 
+			xBytes(verifyData->stackMaps, 0x40, 120, x);
 			if(x) printf("\ts18. liveStack(%p)->stackElements[%d]=0x%x, originalStackZeroEntry\n", liveStack, liveStack->stackBaseIndex, liveStack->stackElements[liveStack->stackBaseIndex], originalStackZeroEntry);
 			/* Restore liveStack */
 			liveStack->stackElements[liveStack->stackBaseIndex] = originalStackZeroEntry;
+			xBytes(verifyData->stackMaps, 0x40, 121, x);
 			if(x) printf("\ts19. liveStack(%p)->stackElements[%d]= 0x%x = originalStackZeroEntry, stackTop=%p, originalStackTop=%p\n", liveStack, liveStack->stackBaseIndex, liveStack->stackElements[liveStack->stackBaseIndex], originalStackZeroEntry, stackTop, originalStackTop);
 			stackTop = originalStackTop;
 			if(x) printf("\ts20. stackTop = originalStackTop=%p\n", stackTop);
+			xBytes(verifyData->stackMaps, 0x40, 122, x);
 		}
 		if(x) printf("\ts21. start=0x%x, pc=0x%x\n", start, pc);
+		xBytes(verifyData->stackMaps, 0x40, 123, x);
 		start = (IDATA) pc;
 
 		/* Merge all branchTargets encountered */	
 		if (bytecodeMap[pc] & BRANCH_TARGET) {
+			xBytes(verifyData->stackMaps, 0x40, 124, x);
 			if(x) printf("\ts22. bytecodeMap[%d](0x%x) & BRANCH_TARGET(0x%x)\n", pc, bytecodeMap[pc], BRANCH_TARGET);
 			/* Don't try to merge a stack we just loaded */
 			if (!justLoadedStack) {
+				xBytes(verifyData->stackMaps, 0x40, 125, x);
 				if(x) printf("\ts23. !justLoadedStack liveStack=%p, stackTop=%p\n", liveStack, stackTop);
 				SAVE_STACKTOP(liveStack, stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 126, x);
 				if(x) printf("\ts24. Before calling mergeStacks (verifyData(%p), start(0x%x))\n", verifyData, start);
 				if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, start)) {
 					errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
@@ -1593,15 +1637,17 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 					goto _outOfMemoryError;
 				}
 				if(x) printf("\ts26. After calling mergeStacks, goto _checkFinished\n");
+				xBytes(verifyData->stackMaps, 0x40, 127, x);
 				goto _checkFinished;
 			}
 		}
-		
+		xBytes(verifyData->stackMaps, 0x40, 128, x);
 		if(x) printf("\ts27. bcIndex=0x%x, code=0x%x, pc=0x%x bc=0x%x\n", bcIndex, code, pc, bc);
 		justLoadedStack = FALSE;
 		
 		bcIndex = code + pc;
 		bc = *bcIndex;
+		xBytes(verifyData->stackMaps, 0x40, 129, x);
 		if(x) printf("\ts28. bcIndex=0x%x, code=0x%x, pc=0x%x bc=0x%x\n", bcIndex, code, pc, bc);
 #ifdef DEBUG_BCV
 #if 1							/* for really verbose logging */
@@ -1614,12 +1660,15 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		}
 		pc += (J9JavaInstructionSizeAndBranchActionTable[bc] & 7);
 		if(x) printf("\ts30. pc=0x%x\n", pc);
+		xBytes(verifyData->stackMaps, 0x40, 130, x);
 		CHECK_END;
-		
+		xBytes(verifyData->stackMaps, 0x40, 131, x);
 		if(x) printf("\ts31.JavaStackActionTable[%d]=0x%x popCount=0x%x\n", bc, JavaStackActionTable[bc], popCount);
 		popCount = JavaStackActionTable[bc] & 0x07;
 		if(x) printf("\ts32.popCount=0x%x\n", popCount);
+		xBytes(verifyData->stackMaps, 0x40, 132, x);
 		if ((stackTop - popCount) < stackBase) {
+			xBytes(verifyData->stackMaps, 0x40, 133, x);
 			if(x) printf("\ts33. (stackTop(%p) - popCount(0x%x)) < stackBase(%p)\n", stackTop, popCount, stackBase);
 			errorType = J9NLS_BCV_ERR_STACK_UNDERFLOW__ID;
 			verboseErrorCode = BCV_ERR_STACK_UNDERFLOW;
@@ -1632,31 +1681,36 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				printf("\ts34. errorType = J9NLS_BCV_ERR_STACK_UNDERFLOW__ID, verboseErrorCode = BCV_ERR_STACK_UNDERFLOW; errorStackIndex(0x%x) = (U_32)(stackTop(%p) - liveStack->stackElements(0x%x) - 1);\n",
 				                                                                                                            errorStackIndex,            stackTop,           liveStack->stackElements);
 			}
+			xBytes(verifyData->stackMaps, 0x40, 134, x);
 			/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase */
 			if (stackTop <= stackBase) {
 				if(x) printf("\ts35. stackTop(%p) <= stackBase(%p)\n", stackTop, stackBase);
 				errorStackIndex = (U_32)(stackBase - liveStack->stackElements);
 				if(x) printf("\ts36. errorStackIndex(0x%x) = (U_32)(stackBase(%p) - liveStack(%p)->stackElements(0x%x))", errorStackIndex, stackBase, liveStack, liveStack->stackElements);
+				xBytes(verifyData->stackMaps, 0x40, 135, x);
 			}
 			if(x) printf("\ts37. goto _verifyError\n");
+			xBytes(verifyData->stackMaps, 0x40, 136, x);
 			goto _verifyError;
 		}
-		
+		xBytes(verifyData->stackMaps, 0x40, 137, x);
 		if(x) printf("\ts38. J9JavaBytecodeVerificationTable[%d]=0x%x type1=0x%x action=0x%x type2=0x%x decodeTable=%p\n", bc, J9JavaBytecodeVerificationTable[bc], type1, action, type2, decodeTable);
 		type1 = (UDATA) J9JavaBytecodeVerificationTable[bc];
 		action = type1 >> 8;
 		type2 = (type1 >> 4) & 0xF;
 		if(x) printf("\ts38. type1=0x%x action=0x%x type2=0x%x decodeTable=%p\n", type1, action, type2, decodeTable);
+		xBytes(verifyData->stackMaps, 0x40, 138, x);
 		type1 = (UDATA) decodeTable[type1 & 0xF];
 		type2 = (UDATA) decodeTable[type2];
 		if(x) printf("\ts39. type1=0x%x action=0x%x type2=0x%x decodeTable=%p\n", type1, action, type2, decodeTable);
-		
+		xBytes(verifyData->stackMaps, 0x40, 139, x);
 		switch (action) {
 		case RTV_NOP:
 		case RTV_INCREMENT:
 			break;
 
 		case RTV_WIDE_LOAD_TEMP_PUSH:
+			xBytes(verifyData->stackMaps, 0x40, 140, x);
 			if(x) printf("\ts40. RTV_WIDE_LOAD_TEMP_PUSH\n");		
 			if (type1 == BCV_GENERIC_OBJECT) {
 				/* Only set for wide Objects - primitives don't read temps */
@@ -1665,6 +1719,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			}	/* Fall through case !!! */
 			
 		case RTV_LOAD_TEMP_PUSH:
+			xBytes(verifyData->stackMaps, 0x40, 141, x);
 			if(x) printf("\ts42. RTV_LOAD_TEMP_PUSH\n");		
 			if (type1 == BCV_GENERIC_OBJECT) {
 				/* aload family */
@@ -1672,142 +1727,181 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				if(x) printf("\ts43. type1(0x%x) == BCV_GENERIC_OBJECT(0x%x) index=0x%x type2=0x%x\n", type1, BCV_GENERIC_OBJECT, index, type2);
 				if (type2 == 0) {
 					index = PARAM_8(bcIndex, 1);
+					xBytes(verifyData->stackMaps, 0x40, 142, x);
 					if(x) printf("\ts44.index=0x%x bcIndex=0x%x wideIndex=%d\n", index, bcIndex, wideIndex);
 					if (wideIndex) {
 						index = PARAM_16(bcIndex, 1);
 						wideIndex = FALSE;
 						if(x) printf("\ts45.index=0x%x bcIndex=0x%x wideIndex=%d\n", index, bcIndex, wideIndex);
+						xBytes(verifyData->stackMaps, 0x40, 143, x);
 					}
 				}
 				type1 = temps[index];
 				PUSH(type1);
 				if(x) printf("\ts44.type1=0x%x\n", type1);
+				xBytes(verifyData->stackMaps, 0x40, 144, x);
 				break;
 			}	/* Fall through case !!! */
 
 		case RTV_PUSH_CONSTANT:
 		_pushConstant:
 			if(x) printf("\ts45. case RTV_PUSH_CONSTANT type1=0x%x\n", type1);
+			xBytes(verifyData->stackMaps, 0x40, 145, x);
 			PUSH(type1);
+			xBytes(verifyData->stackMaps, 0x40, 146, x);
 			if (type1 & BCV_WIDE_TYPE_MASK) {
+				xBytes(verifyData->stackMaps, 0x40, 147, x);
 				if(x) printf("\ts46. type1(0x%x) & BCV_WIDE_TYPE_MASK(0x%x) BCV_BASE_TYPE_TOP=0x%x\n", type1, BCV_WIDE_TYPE_MASK, BCV_BASE_TYPE_TOP);
 				PUSH(BCV_BASE_TYPE_TOP);
+				xBytes(verifyData->stackMaps, 0x40, 148, x);
 			}
 			break;
 
 		case RTV_PUSH_CONSTANT_POOL_ITEM:
+			xBytes(verifyData->stackMaps, 0x40, 149, x);
 			if(x) printf("\ts47. case RTV_PUSH_CONSTANT_POOL_ITEM bc=0x%x verifyData=%p, romClass=%p, index=0x%x, stackTop=%p\n", bc, verifyData, romClass, index, stackTop);
 			switch (bc) {
 			case JBldc:
 			case JBldcw:
 				if(x) printf("\t\ts48.index=0x%x, bcIndex=0x%x\n", index, bcIndex);
+				xBytes(verifyData->stackMaps, 0x40, 150, x);
 				if (bc == JBldc) {
 					index = PARAM_8(bcIndex, 1);
+					xBytes(verifyData->stackMaps, 0x40, 151, x);
 					if(x) printf("\t\ts49. case JBldc : index=0x%x, bcIndex=0x%x\n", index, bcIndex);
 				} else {
 					index = PARAM_16(bcIndex, 1);
+					xBytes(verifyData->stackMaps, 0x40, 152, x);
 					if(x) printf("\t\ts50. case JBldcw : index=0x%x, bcIndex=0x%x\n", index, bcIndex);
 				}
+				xBytes(verifyData->stackMaps, 0x40, 153, x);
 				stackTop = pushLdcType(verifyData, romClass, index, stackTop);
 				if(x) printf("\t\ts51. stacktop=%p, bc=0x%x, verifyData=%p, romClass=%p, index=0x%x, stackTop=%p\n", stackTop, bc, verifyData, romClass, index, stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 154, x);
 				break;
 
 			/* Change lookup table to generate constant of correct type */
 			case JBldc2lw:
+				xBytes(verifyData->stackMaps, 0x40, 155, x);
 				if(x) printf("\t\ts52. case JBldc2lw\n");
 				PUSH_LONG_CONSTANT;
+				xBytes(verifyData->stackMaps, 0x40, 156, x);
 				break;
 
 			case JBldc2dw:
+				xBytes(verifyData->stackMaps, 0x40, 157, x);
 				if(x) printf("\t\ts53. case JBldc2dw\n");
 				PUSH_DOUBLE_CONSTANT;
+				xBytes(verifyData->stackMaps, 0x40, 158, x);
 				break;
 			}
 			break;
 
 		case RTV_ARRAY_FETCH_PUSH:
+			xBytes(verifyData->stackMaps, 0x40, 159, x);
 			if(x) printf("\ts54. case RTV_ARRAY_FETCH_PUSH\n");
 			DROP(1);
 			type = POP;
+			xBytes(verifyData->stackMaps, 0x40, 160, x);
 			if(x) printf("\ts55. type=0x%x\n", type);
 			if (type != BCV_BASE_TYPE_NULL) {
 				if(x) printf("\t\ts56. type(0x%x) != BCV_BASE_TYPE_NULL(0x%x)\n", type, BCV_BASE_TYPE_NULL);
 				if (bc == JBaaload) {
 					type1 = type - 0x01000000;	/* reduce types arity by one */
 					PUSH(type1);
+					xBytes(verifyData->stackMaps, 0x40, 161, x);
 					if(x) printf("\t\ts57. type1=0x%x, type=0x%x\n", type1, type);
 					break;
 				}
 			}
 			if(x) printf("\ts56. goto _pushConstant\n");
+			xBytes(verifyData->stackMaps, 0x40, 161, x);
 			goto _pushConstant;
 			break;
 
 		case RTV_WIDE_POP_STORE_TEMP:
 			if(x) printf("\ts57. case RTV_WIDE_POP_STORE_TEMP\n");
+			xBytes(verifyData->stackMaps, 0x40, 162, x);
 			wideIndex = TRUE;	/* Fall through case !!! */
 
 		case RTV_POP_STORE_TEMP:
+			xBytes(verifyData->stackMaps, 0x40, 163, x);
 			if(x) printf("\ts58. case RTV_POP_STORE_TEMP index=0x%x, type2=0x%x\n", index, type2);
 			index = type2 & 0x7;
 			if(x) printf("\ts59. index=0x%x, type2=0x%x bcIndex=0x%x\n", index, type2, bcIndex);
 			if (type2 == 0) {
 				index = PARAM_8(bcIndex, 1);
+				xBytes(verifyData->stackMaps, 0x40, 164, x);
 				if(x) printf("\ts60. index=0x%x, type2=0x%x bcIndex=0x%x\n", index, type2, bcIndex);
 				if (wideIndex) {
 					index = PARAM_16(bcIndex, 1);
 					wideIndex = FALSE;
+					xBytes(verifyData->stackMaps, 0x40, 165, x);
 					if(x) printf("\ts61. index=0x%x, type2=0x%x bcIndex=0x%x wideIndex = FALSE\n", index, type2, bcIndex);
 				}
 			}
 			
 			tempStoreChange = FALSE;
+			xBytes(verifyData->stackMaps, 0x40, 166, x);
 			if(x) printf("\ts62. type1=0x%x, BCV_GENERIC_OBJECT=0x%x\n", type1, BCV_GENERIC_OBJECT);
 			
 			if (type1 == BCV_GENERIC_OBJECT) {
 				/* astore family */
 				type = POP;
 				tempStoreChange = (type != temps[index]);
+				xBytes(verifyData->stackMaps, 0x40, 167, x);
 				if(x) printf("\ts63. index=0x%x, type=0x%x, temps[%d]=0x%x\n", index, type, index, temps[index]);
 				STORE_TEMP(index, type);
+				xBytes(verifyData->stackMaps, 0x40, 168, x);
 			} else {
+				xBytes(verifyData->stackMaps, 0x40, 169, x);
 				DROP(popCount);
+				xBytes(verifyData->stackMaps, 0x40, 170, x);
 				if(x) printf("\ts63. popCount=0x%x\n", popCount);
 				/* because of pre-index local clearing - the order here matters */
 				if (type1 & BCV_WIDE_TYPE_MASK) {
+					xBytes(verifyData->stackMaps, 0x40, 171, x);
 					if(x) printf("\ts64. type1(0x%x) & BCV_WIDE_TYPE_MASK(0x%x)\n", type1, BCV_WIDE_TYPE_MASK);
 					tempStoreChange = (temps[index + 1] != BCV_BASE_TYPE_TOP);
 					STORE_TEMP((index + 1), BCV_BASE_TYPE_TOP);
 					if(x) printf("\ts65. tempStoreChange(0x%x) = (temps[%d](0x%x) != BCV_BASE_TYPE_TOP(0x%x)\n", tempStoreChange, index+1, temps[index + 1], BCV_BASE_TYPE_TOP);
+					xBytes(verifyData->stackMaps, 0x40, 172, x);
 				}
 				tempStoreChange |= (type1 != temps[index]);
 				STORE_TEMP(index, type1);
+				xBytes(verifyData->stackMaps, 0x40, 173, x);
 				if(x) printf("\ts66. tempStoreChange=0x%x, type1=0x%x, temps[%d]=0x%x, index=0x%x\n", tempStoreChange, type1, index, temps[index], index);
 			}
 			
 			if (checkIfInsideException && tempStoreChange) {
+				xBytes(verifyData->stackMaps, 0x40, 174, x);
 				/* For all exception handlers covering this instruction */
 				handler = J9EXCEPTIONINFO_HANDLERS(exceptionData);
 				SAVE_STACKTOP(liveStack, stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 175, x);
 				if(x) printf("\ts67. checkIfInsideException(0x%x) && tempStoreChange(0x%x) handler=%p exceptionData=%p\n", checkIfInsideException, tempStoreChange, handler, exceptionData);
 				/* Save the current liveStack element zero */
 				/* Reset the stack pointer to push the exception on the empty stack */
 				originalStackTop = stackTop;
 				originalStackZeroEntry = liveStack->stackElements[liveStack->stackBaseIndex];
+				xBytes(verifyData->stackMaps, 0x40, 176, x);
 				if(x) {
 					printf("\ts68. originalStackTop=stackTop=%p originalStackZeroEntry(0x%x), liveStack(%p)->stackElements[%d]=0x%x\n", 
 					                      stackTop,             originalStackZeroEntry,          liveStack,liveStack->stackBaseIndex,liveStack->stackElements[liveStack->stackBaseIndex]);
 				}
 				for (exception = 0; exception < (UDATA) exceptionData->catchCount; exception++) {
+					xBytes(verifyData->stackMaps, 0x40, 177, x);
 					if(x) printf("\ts69. exception=0x%x exceptionData=%p exceptionData->catchCount=0x%x\n", exception, exceptionData, exceptionData->catchCount);
 					/* Find all matching exception ranges and copy/merge the stack with the exception object */
 					if (((UDATA) start >= handler->startPC) && ((UDATA) start < handler->endPC)) {
-#ifdef DEBUG_BCV
+#ifdef DEBUG_BCV				
 						printf("exception map change at startPC: %d\n", handler->startPC);
 #endif
+						xBytes(verifyData->stackMaps, 0x40, 178, x);
 						if(x) printf("\ts70. start=0x%x, handler->startPC=0x%x, handler->endPC=0x%x, handler=%p\n", start, handler->startPC, handler->endPC, handler);
 						stackIndex = bytecodeMap[handler->handlerPC] >> BRANCH_INDEX_SHIFT;
 						branch = BCV_INDEX_STACK (stackIndex);
+						xBytes(verifyData->stackMaps, 0x40, 179, x);
 						/* "push" the exception object */
 						classIndex = BCV_JAVA_LANG_THROWABLE_INDEX;
 						if(x) printf("\ts71. stackIndex=0x%x, bytecodeMap[%d]=0x%x, BRANCH_INDEX_SHIFT=0x%x classIndex=0x%x\n", stackIndex, handler->handlerPC, bytecodeMap[handler->handlerPC], BRANCH_INDEX_SHIFT, classIndex);
@@ -1815,13 +1909,16 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 							/* look up the class in the constant pool */
 							utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) (&constantPool [handler->exceptionClassIndex]));
 							classIndex = findClassName(verifyData, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string));
+							xBytes(verifyData->stackMaps, 0x40, 180, x);
 							if(x) printf("\ts72. handler->exceptionClassIndex=0x%x utf8string=%p constantPool=%p handler=%p constantPool [%d]=0x%x\n", handler->exceptionClassIndex, utf8string, constantPool, handler, handler->exceptionClassIndex, constantPool [handler->exceptionClassIndex]);
 						}
 
 						/* Empty the stack */
+						xBytes(verifyData->stackMaps, 0x40, 181, x);
 						stackTop = &(liveStack->stackElements[liveStack->stackBaseIndex]);
 						PUSH(classIndex << BCV_CLASS_INDEX_SHIFT);
 						SAVE_STACKTOP(liveStack, stackTop);
+						xBytes(verifyData->stackMaps, 0x40, 182, x);
 						if(x) printf("\ts73. stackTop=%p liveStack=%p liveStack->stackElements[%d]=0x%x\n", stackTop, liveStack, liveStack->stackBaseIndex, liveStack->stackElements[liveStack->stackBaseIndex]);
 						if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, branch->pc)) {
 							errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
@@ -1830,66 +1927,82 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 						}
 					}
 					handler++;
+					xBytes(verifyData->stackMaps, 0x40, 183, x);
 					if(x) printf("\ts75. handler=%p\n", handler);
 				}
-
+				xBytes(verifyData->stackMaps, 0x40, 184, x);
 				/* Restore liveStack */
 				liveStack->stackElements[liveStack->stackBaseIndex] = originalStackZeroEntry;
 				stackTop = originalStackTop;
+				xBytes(verifyData->stackMaps, 0x40, 185, x);
 				if(x) printf("\ts76. liveStack=%p liveStack->stackElements[%d]=0x%x\n", liveStack, liveStack->stackBaseIndex, liveStack->stackElements[liveStack->stackBaseIndex]);
 			}
 			break;
 
 		case RTV_POP_X_PUSH_X:
 			popCount = 0;
+			xBytes(verifyData->stackMaps, 0x40, 186, x);
 			if(x) printf("\ts77. case RTV_POP_X_PUSH_X popCount = 0 type2=0x%x\n", type2);
 			if (type2) {
 				/* shift family */
 				popCount = 1;
+				xBytes(verifyData->stackMaps, 0x40, 187, x);
 				if(x) printf("\ts77. case RTV_POP_X_PUSH_X popCount = 0x%x type2=0x%x\n", popCount, type2);
 			}	/* fall through */
 			
 		case RTV_ARRAY_STORE:
+			xBytes(verifyData->stackMaps, 0x40, 188, x);
 			DROP(popCount);
+			xBytes(verifyData->stackMaps, 0x40, 189, x);
 			if(x) printf("\ts78. case RTV_ARRAY_STORE popCount=0x%x\n", popCount);
 			break;
 
 		case RTV_POP_X_PUSH_Y:
+			xBytes(verifyData->stackMaps, 0x40, 190, x);
 			if(x) printf("\ts79 case RTV_POP_X_PUSH_Y : type1=0x%x, type2=0x%x\n", type1, type2);
 			/* Cause push of output type */
 			type1 = type2;	/* fall through */
 
 		case RTV_POP_2_PUSH:
+			xBytes(verifyData->stackMaps, 0x40, 191, x);
 			DROP(popCount);
+			xBytes(verifyData->stackMaps, 0x40, 192, x);
 			if(x) printf("\ts80. case RTV_POP_2_PUSH popCount=0x%x\n", popCount);
 			goto _pushConstant;
 			break;
 
 		case RTV_BRANCH:
+			xBytes(verifyData->stackMaps, 0x40, 193, x);
 			popCount = type2 & 0x07;
 			stackTop -= popCount;
+			xBytes(verifyData->stackMaps, 0x40, 194, x);
 			if(x) printf("\ts80. case RTV_BRANCH popCount=0x%x stackTop=%p\n", popCount, stackTop);
 			if (bc == JBgotow) {
 				offset32 = (I_32) PARAM_32(bcIndex, 1);
 				target = start + offset32;
+				xBytes(verifyData->stackMaps, 0x40, 195, x);
 				if(x) printf("\ts81. bc == JBgotow(0x%x) offset32=0x%x bcIndex=0x%x start=0x%x target=0x%x\n", bc, offset32, bcIndex, start, target);
 			} else {
 				offset16 = (I_16) PARAM_16(bcIndex, 1);
 				target = start + offset16;
+				xBytes(verifyData->stackMaps, 0x40, 196, x);
 				if(x) printf("\ts81. bc(0x%x) != JBgotow(0x%x) bcIndex=0x%x start=0x%x target=0x%x\n", bc, JBgotow, bcIndex, start, target);
 			}
-
+			xBytes(verifyData->stackMaps, 0x40, 197, x);
 			SAVE_STACKTOP(liveStack, stackTop);
+			xBytes(verifyData->stackMaps, 0x40, 198, x);
 			/* Merge our stack to the target */
 			if(x) printf("\ts82. Before calling mergeStacks(verifyData(%p), target(0x%x))\n", verifyData, target);
 			if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, target)) {
 				errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
+				xBytes(verifyData->stackMaps, 0x40, 199, x);
 				if(x) printf("\ts83. errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID\n");
 				goto _outOfMemoryError;
 			}
 
 			/* Unconditional branch (goto family) */
 			if (popCount == 0) {
+				xBytes(verifyData->stackMaps, 0x40, 200, x);
 				if(x) printf("\ts84. popCount == 0\n");
 				goto _checkFinished;
 			}
@@ -1897,74 +2010,93 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 		case RTV_RETURN:
 			if(x) printf("\ts85. case RTV_RETURN\n");
+			xBytes(verifyData->stackMaps, 0x40, 201, x);
 			goto _checkFinished;
 			break;
 
 		case RTV_STATIC_FIELD_ACCESS:
+			xBytes(verifyData->stackMaps, 0x40, 202, x);
 			index = PARAM_16(bcIndex, 1);
 			info = &constantPool[index];
 			utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
+			xBytes(verifyData->stackMaps, 0x40, 203, x);
 			if(x) printf("\ts86. index=0x%x, bcIndex=0x%x constantPool=%p constantPool[%d]=0x%x\n", index, bcIndex, constantPool, index, constantPool[index]);
 			if (bc >= JBgetfield) {
+				xBytes(verifyData->stackMaps, 0x40, 204, x);
 				/* field bytecode receiver */
 				DROP(1);
+				xBytes(verifyData->stackMaps, 0x40, 205, x);
 				if(x) printf("\ts87. bc(0x%x) >= JBgetfield(0x%x)\n", bc, JBgetfield);
 			}
 			
 			if (bc & 1) {
+				xBytes(verifyData->stackMaps, 0x40, 206, x);
 				/* JBputfield/JBpustatic - odd bc's */
 				if(x) printf("\ts88. bc=0x%x\n");
 				DROP(1);
+				xBytes(verifyData->stackMaps, 0x40, 207, x);
 				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
 					DROP(1);
+					xBytes(verifyData->stackMaps, 0x40, 208, x);
 					if(x) printf("\ts89. bc=0x%x utf8string=%p\n", utf8string);
 				}
 				
 			} else {
+				xBytes(verifyData->stackMaps, 0x40, 209, x);
 				if(x) printf("\ts90. stackTop=%p, verifyData=%p, utf8string=%p\n", stackTop, verifyData, utf8string, stackTop);
 				/* JBgetfield/JBgetstatic - even bc's */
 				stackTop = pushFieldType(verifyData, utf8string, stackTop);
 				if(x) printf("\ts91. stackTop=%p\n", stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 210, x);
 			}
 			break;
 
 		case RTV_SEND:
+			xBytes(verifyData->stackMaps, 0x40, 211, x);
 			if(x) printf("\ts92. case RTV_SEND bc=0x%x\n", bc);
 			if (bc == JBinvokeinterface2) {
 				/* Set to point to JBinvokeinterface */
 				bcIndex += 2;
+				xBytes(verifyData->stackMaps, 0x40, 212, x);
 				if(x) printf("\ts93. bc=0x%x bcIndex=0x%x\n", bc, bcIndex);
 			}
 			index = PARAM_16(bcIndex, 1);
+			xBytes(verifyData->stackMaps, 0x40, 213, x);
 			if(x) printf("\ts94. index=0x%x, bcIndex=0x%x\n", index, bcIndex);
 			if (JBinvokestaticsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + index);
+				xBytes(verifyData->stackMaps, 0x40, 214, x);
 				if(x) printf("\ts95. JBinvokestaticsplit == bc == 0x%x romClass=%p index=0x%x\n", bc, romClass, index);
 			} else if (JBinvokespecialsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + index);
+				xBytes(verifyData->stackMaps, 0x40, 215, x);
 				if(x) printf("\ts96. JBinvokespecialsplit == bc == 0x%x romClass=%p index=0x%x\n", bc, romClass, index);
 			}
 			if (bc == JBinvokedynamic) {
 				/* TODO invokedynamic should allow for a 3 byte index.  Adjust 'index' to include the other byte */
 				utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(SRP_PTR_GET(callSiteData + index, J9ROMNameAndSignature*))));
 				if(x) printf("\ts97. bc == JBinvokedynamic == 0x%x utf8string=%p callSiteData=%p index=0x%x\n", bc, utf8string, callSiteData, index);
+				xBytes(verifyData->stackMaps, 0x40, 216, x);
 			} else {
 				info = &constantPool[index];
 				utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info))));
 				if(x) printf("\ts98. info=%p constantPool=%p constantPool[%d]=0x%x utf8string=%p\n", info, index, constantPool[index], utf8string);
+				xBytes(verifyData->stackMaps, 0x40, 217, x);
 			}
 			stackTop -= getSendSlotsFromSignature(J9UTF8_DATA(utf8string));
 			if(x) printf("\ts99. stackTop=%p utf8string=%p\n", stackTop, utf8string);
-			
+			xBytes(verifyData->stackMaps, 0x40, 218, x);
 			if ((JBinvokestatic != bc) 
 			&& (JBinvokedynamic != bc)
 			&& (JBinvokestaticsplit != bc)
 			) {
+				xBytes(verifyData->stackMaps, 0x40, 219, x);
 				if(x) printf("\ts100. bc=0x%x\n", bc);
 				if ((JBinvokespecial == bc) 
 				|| (JBinvokespecialsplit == bc)
 				) {
 					type = POP;
+					xBytes(verifyData->stackMaps, 0x40, 220, x);
 					if(x) printf("\ts101. bc=0x%x JBinvokespecial=0x%x JBinvokespecialsplit=0x%x type=0x%x\n", bc, JBinvokespecial, JBinvokespecialsplit, type);
 					if (J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info)))[0] == '<') { 
 						if(x) printf("\ts102.info=%p\n", info);
@@ -1990,19 +2122,24 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 					if(x) printf("\ts103.\n");
 				} 
 			}
+			xBytes(verifyData->stackMaps, 0x40, 221, x);
 			if(x) printf("\ts104.verifyData=%p, utf8string=%p, stackTop=%p\n", verifyData, utf8string, stackTop);
 			stackTop = pushReturnType(verifyData, utf8string, stackTop);
 			if(x) printf("\ts105.verifyData=%p, utf8string=%p, stackTop=%p\n", verifyData, utf8string, stackTop);
+			xBytes(verifyData->stackMaps, 0x40, 222, x);
 			break;
 
 		case RTV_PUSH_NEW:
+			xBytes(verifyData->stackMaps, 0x40, 223, x);
 			if(x) printf("\ts105. case RTV_PUSH_NEW : bc=0x%x\n", bc);
 			switch (bc) {
 			case JBnew:
 			case JBnewdup:
+				xBytes(verifyData->stackMaps, 0x40, 224, x);
 				if(x) printf("\ts106. BCV_SPECIAL_NEW(0x%x) | (start(0x%x) << BCV_CLASS_INDEX_SHIFT(0x%x)) -> 0x%x\n", BCV_SPECIAL_NEW, start, BCV_CLASS_INDEX_SHIFT, (BCV_SPECIAL_NEW | (start << BCV_CLASS_INDEX_SHIFT)));
 				/* put a uninitialized object of the correct type on the stack */
 				PUSH(BCV_SPECIAL_NEW | (start << BCV_CLASS_INDEX_SHIFT));
+				xBytes(verifyData->stackMaps, 0x40, 225, x);
 				break;
 
 			case JBnewarray:
@@ -2011,6 +2148,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				DROP(1);	/* pop the size of the array */
 				PUSH(type);	/* arity of one implicit */
 				if(x) printf("\ts107. index=0x%x, type=0x%x, newArrayParamConversion=%p\n", index, type, newArrayParamConversion);
+				xBytes(verifyData->stackMaps, 0x40, 226, x);
 				break;
 
 			case JBanewarray:
@@ -2018,11 +2156,13 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				DROP(1);	/* pop the size of the array */
 				info = &constantPool[index];
 				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
-
+				xBytes(verifyData->stackMaps, 0x40, 227, x);
 				stackTop = pushClassType(verifyData, utf8string, stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 228, x);
 				/* arity is one greater than signature */
 				type = POP;
 				PUSH(( (UDATA)1 << BCV_ARITY_SHIFT) + type);
+				xBytes(verifyData->stackMaps, 0x40, 229, x);
 				if(x) printf("\ts108. index=0x%x, bcIndex=0x%x, info=%p, constantPool=%p, type=0x%x, (( (UDATA)1 << BCV_ARITY_SHIFT) + type)=0x%x\n", index, bcIndex, info, constantPool, type, (( (UDATA)1 << BCV_ARITY_SHIFT) + type));
 				break;
 
@@ -2031,30 +2171,37 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				index = PARAM_16(bcIndex, 1);
 				i1 = PARAM_8(bcIndex, 3);
 				DROP(i1);
+				xBytes(verifyData->stackMaps, 0x40, 220, x);
 				if(x) printf("\ts109. index=0x%x, bcIndex=0x%x i1=0x%x stackTop=%p, stackBase=%p\n", index, bcIndex, i1, stackTop, stackBase);
 				if (stackTop < stackBase) {
 					errorType = J9NLS_BCV_ERR_STACK_UNDERFLOW__ID;
 					verboseErrorCode = BCV_ERR_STACK_UNDERFLOW;
 					/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase */
 					errorStackIndex = (U_32)(stackBase - liveStack->stackElements);
+					xBytes(verifyData->stackMaps, 0x40, 221, x);
 					if(x) printf("\ts110\n");
 					goto _verifyError;
 				}
 
 				info = &constantPool[index];
 				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
+				xBytes(verifyData->stackMaps, 0x40, 222, x);
 				if(x) printf("\ts111. info=%p, constantPool=%p, constantPool[%d]=0x%x verifyData=%p, utf8string=%p, stackTop=%p\n", info, constantPool, index, constantPool[index], verifyData, utf8string, stackTop);
 				stackTop = pushClassType(verifyData, utf8string, stackTop);
 				if(x) printf("\ts112. stackTop=%p\n", stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 223, x);
 				break;
 			}
+			xBytes(verifyData->stackMaps, 0x40, 224, x);
 			if(x) printf("\ts113.\n");
 			break;
 
 		case RTV_MISC:
+			xBytes(verifyData->stackMaps, 0x40, 225, x);
 			if(x) printf("\ts114. case RTV_MISC. bc=0x%x\n", bc);
 			switch (bc) {
 			case JBathrow:
+				xBytes(verifyData->stackMaps, 0x40, 226, x);
 				if(x) printf("\t\ts115 JBathrow=0x%x\n", JBathrow);
 				goto _checkFinished;
 				break;
@@ -2063,24 +2210,29 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			case JBinstanceof:
 				DROP(1);
 				PUSH_INTEGER_CONSTANT;
+				xBytes(verifyData->stackMaps, 0x40, 227, x);
 				if(x) printf("\t\ts116 JBinstanceof=0x%x\n", JBinstanceof);
 				break;
 
 			case JBtableswitch:
 			case JBlookupswitch:
+				xBytes(verifyData->stackMaps, 0x40, 228, x);
 				if(x) printf("\t\ts117. pc=0x%x, index=0x%x, bcIndex=0x%x, start=0x%x liveStack=%p, stackTop=%p\n", pc, index, bcIndex, start, liveStack, stackTop);
 				DROP(1);
 				index = (UDATA) ((4 - (pc & 3)) & 3);	/* consume padding */
 				pc += index;
 				bcIndex += index;
 				pc += 8;
+				xBytes(verifyData->stackMaps, 0x40, 229, x);
 				if(x) printf("\t\ts117.5 pc=0x%x, index=0x%x, bcIndex=0x%x, start=0x%x liveStack=%p, stackTop=%p\n", pc, index, bcIndex, start, liveStack, stackTop);
 				CHECK_END;
 				offset32 = (I_32) PARAM_32(bcIndex, 1);
 				bcIndex += 4;
 				target = offset32 + start;
+				xBytes(verifyData->stackMaps, 0x40, 230, x);
 				if(x) printf("\t\ts118. pc=0x%x, index=0x%x, bcIndex=0x%x, start=0x%x liveStack=%p, stackTop=%p offset32=0x%x\n", pc, index, bcIndex, start, liveStack, stackTop, offset32);
 				SAVE_STACKTOP(liveStack, stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 231, x);
 				if(x) printf("\t\ts119. Before calling mergeStack() verifyData=%p, target=0x%x\n",verifyData, target);
 				if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, target)) {
 					errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
@@ -2089,6 +2241,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				}
 
 				if (bc == JBtableswitch) {
+					xBytes(verifyData->stackMaps, 0x40, 232, x);
 					if(x) printf("\t\ts121. i1=0x%x i2=0x%x, bcIndex=0x%x, pc=0x%x\n", i1, i2, bcIndex, pc);
 					i1 = (I_32) PARAM_32(bcIndex, 1);
 					bcIndex += 4;
@@ -2097,6 +2250,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 					bcIndex += 4;
 
 					pc += ((I_32)i2 - (I_32)i1 + 1) * 4;
+					xBytes(verifyData->stackMaps, 0x40, 233, x);
 					if(x) printf("\t\ts121.5 i1=0x%x i2=0x%x, bcIndex=0x%x, pc=0x%x\n", i1, i2, bcIndex, pc);
 					CHECK_END;
 
@@ -2106,12 +2260,15 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 					/* Count the entries */
 					i2 = (I_32)i2 - (I_32)i1 + 1;
+					xBytes(verifyData->stackMaps, 0x40, 234, x);
 					if(x) printf("\t\ts122. i1=0x%x i2=0x%x, bcIndex=0x%x, pc=0x%x\n", i1, i2, bcIndex, pc);
 					for (i1 = 0; (I_32)i1 < (I_32)i2; i1++) {
 						if(x) printf("\t\ts123. i1=0x%x, i2=0x%x\n", i1,i2);
+						xBytes(verifyData->stackMaps, 0x40, 235, x);
 						offset32 = (I_32) PARAM_32(bcIndex, 1);
 						bcIndex -= 4;	/* back up to point at the previous table switch entry */
 						target = offset32 + start;
+						xBytes(verifyData->stackMaps, 0x40, 236, x);
 						if(x) printf("\t\ts124. offset32=0x%x, bcIndex=0x%x, start=0x%x, target=0x%x\n", offset32, bcIndex, start, target);
 						if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, target)) {
 							errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
@@ -2120,46 +2277,57 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 						}
 					}
 				} else {
+					xBytes(verifyData->stackMaps, 0x40, 237, x);
 					if(x) printf("\t\ts126. i2=0x%x, bcIndex=0x%x\n", i2, bcIndex);
 					i2 = (I_32) PARAM_32(bcIndex, 1);
 					bcIndex += 4;
 
 					pc += (I_32)i2 * 8;
+					xBytes(verifyData->stackMaps, 0x40, 238, x);
 					if(x) printf("\t\ts126. i2=0x%x, bcIndex=0x%x pc=0x%x\n", i2, bcIndex, pc);
 					CHECK_END;
+					xBytes(verifyData->stackMaps, 0x40, 239, x);
 					if(x) printf("\t\ts126.5. i2=0x%x, bcIndex=0x%x pc=0x%x\n", i2, bcIndex, pc);
 					for (i1 = 0; (I_32)i1 < (I_32)i2; i1++) {
+						xBytes(verifyData->stackMaps, 0x40, 240, x);
 						if(x) printf("\t\ts127. i1=0x%x, i2=0x%x bcIndex=0x%x, start=0x%x\n", i1, i2, bcIndex, start);
 						bcIndex += 4;
 						offset32 = (I_32) PARAM_32(bcIndex, 1);
 						bcIndex += 4;
 						target = offset32 + start;
+						xBytes(verifyData->stackMaps, 0x40, 241, x);
 						if(x) printf("\t\ts128. i1=0x%x, i2=0x%x bcIndex=0x%x, start=0x%x offset32=0x%x target=0x%x\n", i1, i2, bcIndex, start, offset32, target);
 						
 						if (BCV_ERR_INSUFFICIENT_MEMORY == mergeStacks (verifyData, target)) {
 							errorType = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
+							xBytes(verifyData->stackMaps, 0x40, 242, x);
 							if(x) printf("\t\ts129. J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID=%d\n", J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID);
 							goto _outOfMemoryError;
 						}
 					}
 				}
 				if(x) printf("\t\ts130. goto _checkFinished;\n");
+				xBytes(verifyData->stackMaps, 0x40, 243, x);
 				goto _checkFinished;
 				break;
 
 			case JBmonitorenter:
 			case JBmonitorexit:
+				xBytes(verifyData->stackMaps, 0x40, 244, x);
 				DROP(1);
+				xBytes(verifyData->stackMaps, 0x40, 245, x);
 				if(x) printf("\t\ts131. JBmonitorenter=0x%x, JBmonitorexit=0x%x\n", JBmonitorenter, JBmonitorexit);
 				break;
 
 			case JBcheckcast:
+				xBytes(verifyData->stackMaps, 0x40, 246, x);
 				if(x) printf("\t\ts132. case JBcheckcast index=0x%x, bcIndex=0x%x constantPool=%p info=%p verifyData=%p, stackTop=%p\n", index, bcIndex, constantPool, info, verifyData, stackTop);
 				index = PARAM_16(bcIndex, 1);
 				DROP(1);
 				info = &constantPool[index];
 				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
 				stackTop = pushClassType(verifyData, utf8string, stackTop);
+				xBytes(verifyData->stackMaps, 0x40, 247, x);
 				if(x) printf("\t\ts133. index=0x%x, bcIndex=0x%x constantPool=%p info=%p verifyData=%p, utf8string=%p, stackTop=%p\n", index, bcIndex, constantPool, info, verifyData, utf8string, stackTop);
 				break;
 			}
@@ -2168,12 +2336,14 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		case RTV_POP_2_PUSH_INT:
 			DROP(popCount);
 			PUSH_INTEGER_CONSTANT;
+			xBytes(verifyData->stackMaps, 0x40, 248, x);
 			if(x) printf("\ts134. popCount=0x%x\n", popCount);
 			break;
 
 		case RTV_BYTECODE_POP:
 		case RTV_BYTECODE_POP2:
 			DROP(popCount);
+			xBytes(verifyData->stackMaps, 0x40, 249, x);
 			if(x) printf("\ts135. popCount=0x%x\n", popCount);
 			break;
 
@@ -2181,6 +2351,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			type = POP;
 			PUSH(type);
 			PUSH(type);
+			xBytes(verifyData->stackMaps, 0x40, 250, x);
 			if(x) printf("\ts136. popCount=0x%x type=0x%x\n", popCount, type);
 			break;
 
@@ -2190,6 +2361,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			PUSH(type);
 			PUSH(temp1);
 			PUSH(type);
+			xBytes(verifyData->stackMaps, 0x40, 251, x);
 			if(x) printf("\ts137. type=0x%x temp1=0x%x\n", type, temp1);
 			break;
 
@@ -2201,6 +2373,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			PUSH(temp2);
 			PUSH(temp1);
 			PUSH(type);
+			xBytes(verifyData->stackMaps, 0x40, 252, x);
 			if(x) printf("\ts138. type=0x%x temp1=0x%x temp2=0x%x\n", type, temp1, temp2);
 			break;
 
@@ -2211,6 +2384,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			PUSH(temp1);
 			PUSH(temp2);
 			PUSH(temp1);
+			xBytes(verifyData->stackMaps, 0x40, 253, x);
 			if(x) printf("\ts139. temp1=0x%x temp2=0x%x\n", temp1, temp2);
 			break;
 
@@ -2223,6 +2397,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			PUSH(temp2);
 			PUSH(temp1);
 			PUSH(type);
+			xBytes(verifyData->stackMaps, 0x40, 254, x);
 			if(x) printf("\ts140. type=0x%x temp1=0x%x temp2=0x%x\n", type, temp1, temp2);
 			break;
 
@@ -2237,6 +2412,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			PUSH(temp2);
 			PUSH(temp1);
 			PUSH(type);
+			xBytes(verifyData->stackMaps, 0x40, 255, x);
 			if(x) printf("\ts141. type=0x%x temp1=0x%x temp2=0x%x temp3=0x%x\n", type, temp1, temp2, temp3);
 			break;
 
@@ -2245,6 +2421,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			temp1 = POP;
 			PUSH(type);
 			PUSH(temp1);
+			xBytes(verifyData->stackMaps, 0x40, 256, x);
 			if(x) printf("\ts142. type=0x%x temp1=0x%x\n", type, temp1);
 			break;
 
@@ -2252,21 +2429,26 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			errorType = J9NLS_BCV_ERR_BC_UNKNOWN__ID;
 			/* Jazz 104084: Set the error code in the case of unrecognized opcode. */
 			verboseErrorCode = BCV_ERR_BAD_BYTECODE;
+			xBytes(verifyData->stackMaps, 0x40, 257, x);
 			if(x) printf("\ts143. goto _verifyError\n");
 			goto _verifyError;
 			break;
 		}
+		xBytes(verifyData->stackMaps, 0x40, 258, x);
 		if(x) printf("\ts144. Before continue\n");
 		continue;
 
 _checkFinished:
+		xBytes(verifyData->stackMaps, 0x40, 259, x);
 		if(x) printf("\ts145. _checkFinished verifyData=%p verifyData->unwalkedQueueHead=%p, verifyData->unwalkedQueueTail=%p\n", verifyData, verifyData->unwalkedQueueHead, verifyData->unwalkedQueueTail);
 		if (verifyData->unwalkedQueueHead != verifyData->unwalkedQueueTail) {
 			pc = verifyData->unwalkedQueue[verifyData->unwalkedQueueHead++];
 			verifyData->unwalkedQueueHead %= (verifyData->rootQueueSize / sizeof(UDATA));
+			xBytes(verifyData->stackMaps, 0x40, 260, x);
 			if(x) printf("\ts146. pc=0x%x verifyData=%p verifyData->unwalkedQueueHead=%p, verifyData->unwalkedQueueTail=%p\n", pc, verifyData, verifyData->unwalkedQueueHead, verifyData->unwalkedQueueTail);
 			if ((bytecodeMap[pc] & BRANCH_ON_UNWALKED_QUEUE) == 0) {
 				if(x) printf("\ts147. (bytecodeMap[%d](0x%x) & BRANCH_ON_UNWALKED_QUEUE(0x%x)) == 0, goto _checkFinished;\n", pc, bytecodeMap[pc], BRANCH_ON_UNWALKED_QUEUE);
+				xBytes(verifyData->stackMaps, 0x40, 261, x);
 				goto _checkFinished;
 			}
 			bytecodeMap[pc] &= ~BRANCH_ON_UNWALKED_QUEUE;
@@ -2274,6 +2456,7 @@ _checkFinished:
 			stackIndex = bytecodeMap[pc] >> BRANCH_INDEX_SHIFT;
 			branch = BCV_INDEX_STACK (stackIndex);
 			copyStack(branch, liveStack);
+			xBytes(verifyData->stackMaps, 0x40, 262, x);
 			if(x) printf("\ts147. bytecodeMap[%d]=0x%x bcIndex=0x%x code=0x%x pc=0x%x stackIndex=0x%x branch=%p, liveStack=%p\n", pc, bytecodeMap[pc], bcIndex, code, pc, stackIndex, branch, liveStack);
 			RELOAD_LIVESTACK;
 			justLoadedStack = TRUE;
@@ -2285,11 +2468,14 @@ _checkFinished:
 					(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)),
 					J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 					start, start, pc, pc);
+			xBytes(verifyData->stackMaps, 0x40, 263, x);
 			if(x) printf("\ts148. branch=%p, liveStack=%p\n", branch, liveStack);
 		} else if (verifyData->rewalkQueueHead != verifyData->rewalkQueueTail) {
 			if(x) printf("\ts149. verifyData->rewalkQueueHead(0x%x) != verifyData->rewalkQueueTail(0x%x)\n", verifyData->rewalkQueueHead, verifyData->rewalkQueueTail);
+			xBytes(verifyData->stackMaps, 0x40, 264, x);
 			pc = verifyData->rewalkQueue[verifyData->rewalkQueueHead++];
 			verifyData->rewalkQueueHead %= (verifyData->rootQueueSize / sizeof(UDATA));
+			xBytes(verifyData->stackMaps, 0x40, 265, x);
 			if(x) printf("\ts150. pc=0x%x verifyData->rewalkQueueHead=0x%x\n", pc, verifyData->rewalkQueueHead);
 			if ((bytecodeMap[pc] & BRANCH_ON_REWALK_QUEUE) == 0) {
 				if(x) printf("\ts151. (bytecodeMap[%d](0x%x) & BRANCH_ON_REWALK_QUEUE(0x%x)) == 0\n", pc, bytecodeMap[pc], BRANCH_ON_REWALK_QUEUE);
@@ -2300,8 +2486,10 @@ _checkFinished:
 			stackIndex = bytecodeMap[pc] >> BRANCH_INDEX_SHIFT;
 			branch = BCV_INDEX_STACK (stackIndex);
 			copyStack(branch, liveStack);
+			xBytes(verifyData->stackMaps, 0x40, 266, x);
 			if(x) printf("\ts152. bytecodeMap[%d]=0x%x, bcIndex=0x%x, code=0x%x, pc=0x%x, stackIndex=0x%x, branch=%p, liveStack\n", pc, bytecodeMap[pc], bcIndex, code, pc, stackIndex, branch, liveStack);
 			RELOAD_LIVESTACK;
+			xBytes(verifyData->stackMaps, 0x40, 267, x);
 			justLoadedStack = TRUE;
 			Trc_BCV_simulateStack_RewalkFrom(verifyData->vmStruct, 
 					(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
@@ -2311,16 +2499,18 @@ _checkFinished:
 					(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)),
 					J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 					start, start, pc, pc);
+			xBytes(verifyData->stackMaps, 0x40, 268, x);
 			if(x) printf("\ts153. start=0x%x, pc=0x%x\n", start, pc);
 		} else {
 			Trc_BCV_simulateStack_Exit(verifyData->vmStruct);
 			/* else we are done the rootSet -- return */
+			xBytes(verifyData->stackMaps, 0x40, 269, x);
 			if(x) printf("\ts154. return BCV_SUCCESS\n");
 			return BCV_SUCCESS;
 		}
 	}
 #undef CHECK_END
-
+	xBytes(verifyData->stackMaps, 0x40, 270, x);
 	errorType = J9NLS_BCV_ERR_UNEXPECTED_EOF__ID;	/* should never reach here */
 	if(x) printf("\ts155.\n");
 _verifyError:
@@ -2340,6 +2530,7 @@ _verifyError:
 			J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 			verifyData->errorCode, verifyData->errorPC, verifyData->errorPC, bc);
 	Trc_BCV_simulateStack_Exit(verifyData->vmStruct);
+	xBytes(verifyData->stackMaps, 0x40, 271, x);
 	if(x) printf("\ts156. verifyData->errorCode=0x%x, verifyData->errorPC=0x%x, verifyData->errorPC=0x%x, bc=0x%x return BCV_ERR_INTERNAL_ERROR\n", verifyData->errorCode, verifyData->errorPC, verifyData->errorPC, bc);
 	return BCV_ERR_INTERNAL_ERROR;
 
@@ -2358,6 +2549,7 @@ _outOfMemoryError:
 		J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 		verifyData->errorCode, verifyData->errorPC, verifyData->errorPC, bc);
 	Trc_BCV_simulateStack_Exit(verifyData->vmStruct);
+	xBytes(verifyData->stackMaps, 0x40, 272, x);
 	if(x) printf("\ts157. verifyData->errorCode=0x%x, verifyData->errorPC=0x%x, verifyData->errorPC=0x%x, bc=0x%x return BCV_ERR_INSUFFICIENT_MEMORY\n", verifyData->errorCode, verifyData->errorPC, verifyData->errorPC, bc);
 	return BCV_ERR_INSUFFICIENT_MEMORY;
 
@@ -2813,8 +3005,11 @@ _fallBack:
 						liveStack->pc = j;		/* offset of the branch target */
 						liveStack->stackBaseIndex = -1;
 						liveStack->stackTopIndex = -1;
+						xBytes(verifyData->stackMaps, 0x40, 0, x);
 						liveStack = BCV_NEXT_STACK (liveStack);
+						xBytes(verifyData->stackMaps, 0x40, 1, x);
 						(bytecodeMap)[j] |= (mapIndex << BRANCH_INDEX_SHIFT);
+						xBytes(verifyData->stackMaps, 0x40, 2, x);
 						if(x) printf("v10.4. bytecodeMap[%d]=0x%x, mapIndex=0x%x, BRANCH_INDEX_SHIFT=0x%x\n", j, bytecodeMap[j], mapIndex, BRANCH_INDEX_SHIFT);
 						mapIndex++;
 						if(x) printf("v10.6. mapIndex=0x%x\n", mapIndex);
@@ -2827,11 +3022,14 @@ _fallBack:
 				if (rootQueueSize > verifyData->rootQueueSize) {
 					if(x) printf("v12.rootQueueSize(%d) > verifyData->rootQueueSize(%d)\n", rootQueueSize, verifyData->rootQueueSize);
 					bcvfree(verifyData, verifyData->unwalkedQueue);
+					xBytes(verifyData->stackMaps, 0x40, 3, x);
 					verifyData->unwalkedQueue = bcvalloc(verifyData, rootQueueSize);
+					xBytes(verifyData->stackMaps, 0x40, 4, x);
 					if(x) printf("v13.rootQueueSize(%d) > verifyData->rootQueueSize(%d) verifyData->unwalkedQueue=%p\n", rootQueueSize, verifyData->rootQueueSize, verifyData->unwalkedQueue);
 					bcvfree(verifyData, verifyData->rewalkQueue);
 					verifyData->rewalkQueue = bcvalloc(verifyData, rootQueueSize);
 					verifyData->rootQueueSize = rootQueueSize;
+					xBytes(verifyData->stackMaps, 0x40, 5, x);
 					if(x) printf("v14.rootQueueSize(%d) > verifyData->rootQueueSize(%d) verifyData->rewalkQueue=%p verifyData->rootQueueSize=%d\n", rootQueueSize, verifyData->rootQueueSize, verifyData->rewalkQueue,verifyData->rootQueueSize);
 					if (!(verifyData->unwalkedQueue && verifyData->rewalkQueue)) {
 						result = BCV_ERR_INSUFFICIENT_MEMORY;
@@ -2842,19 +3040,24 @@ _fallBack:
 			}
 
 			liveStack = (J9BranchTargetStack *) verifyData->liveStack;
+			xBytes(verifyData->stackMaps, 0x40, 6, x);
 			stackTop = &(liveStack->stackElements[0]);
+			xBytes(verifyData->stackMaps, 0x40, 7, x);
 	
 			isInitMethod = buildStackFromMethodSignature(verifyData, &stackTop, &argCount);
-	
+			xBytes(verifyData->stackMaps, 0x40, 8, x);
 			SAVE_STACKTOP(liveStack, stackTop);
 			liveStack->stackBaseIndex = liveStack->stackTopIndex;
 			if(x) printf("v16.liveStack=%p stackTop=%p, isInitMethod=%d liveStack->stackBaseIndex=%d verifyData->stackMapsCount=%d\n", liveStack, stackTop, isInitMethod, liveStack->stackBaseIndex, verifyData->stackMapsCount);
+			xBytes(verifyData->stackMaps, 0x40, 9, x);
 			result = 0;
 			if (verifyData->stackMapsCount) {
 				if (createStackMaps) {
 					if(x) printf("v17.Before calling simulateStack verifyData=%p\n", verifyData);
+					xBytes(verifyData->stackMaps, 0x40, 10, x);
 					result = simulateStack (verifyData);
 					if(x) printf("v18.After calling simulateStack verifyData=%p\n", verifyData);
+					xBytes(verifyData->stackMaps, 0x40, 1000, x);
 				} else {
 					if(x) printf("v19.Before calling decompressStackMaps verifyData=%p argCount=%d, stackMapData=%p\n", verifyData, argCount, stackMapData);
 					if(x && stackMapData != NULL) printf("stackMapData=%s\n", stackMapData);
