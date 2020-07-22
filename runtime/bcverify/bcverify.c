@@ -3001,11 +3001,11 @@ _fallBack:
 				for (j = 0; j < length; j++) {
 					if(x) printf("v10.\tj=%d length=%d bytecodeMap[%d]=0x%x\n", j, length, j, (bytecodeMap)[j]);
 					if ((bytecodeMap)[j] & BRANCH_TARGET) {
-						if(x) printf("v10.2. bytecodeMap[%d](0x%x) & BRANCH_TARGET(0x%x) liveStack=%p\n", j, bytecodeMap[j], BRANCH_TARGET, liveStack);
+						if(x) printf("v10.3. bytecodeMap[%d](0x%x) & BRANCH_TARGET(0x%x) liveStack=%p &(liveStack->pc)=%p &(liveStack->stackBaseIndex)=%p &(liveStack->stackTopIndex)=%p\n", j, bytecodeMap[j], BRANCH_TARGET, liveStack, &(liveStack->pc), &(liveStack->stackBaseIndex), &(liveStack->stackTopIndex));
 						liveStack->pc = j;		/* offset of the branch target */
 						liveStack->stackBaseIndex = -1;
 						liveStack->stackTopIndex = -1;
-						xBytes(verifyData->stackMaps, 0x40, 0, x);
+						xBytes(liveStack, 0x40, 0, x);
 						liveStack = BCV_NEXT_STACK (liveStack);
 						xBytes(verifyData->stackMaps, 0x40, 1, x);
 						(bytecodeMap)[j] |= (mapIndex << BRANCH_INDEX_SHIFT);
