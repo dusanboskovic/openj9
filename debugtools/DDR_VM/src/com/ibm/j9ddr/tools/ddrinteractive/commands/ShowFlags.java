@@ -19,14 +19,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
+package com.ibm.j9ddr.tools.ddrinteractive.commands;
 
-import j9vm.test.ddrext.util.parser.ClassForNameOutputParser;
+import java.io.PrintStream;
+import java.util.Collection;
+
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
-import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
-import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
+import com.ibm.j9ddr.StructureReader.StructureDescriptor;
+import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
+import com.ibm.j9ddr.CorruptDataException;
 
 
 
@@ -41,12 +44,11 @@ public class ShowFlags extends Command {
         try{
             if (args.length > 2) { //rectify 
                 out.println("ShowFlags expects 2 arguments or less");
-                printUsage(out);
                 return;
             }
 
             StructureDescriptor currentStruct = null;
-            Collection currentStructures = context.vmData.getStructures();
+            Collection<StructureDescriptor> currentStructures = context.vmData.getStructures();
 
             //If no arguments are specified, output all the structures
             //out.printf("The possible structures: "+ currentStructures);
@@ -56,7 +58,7 @@ public class ShowFlags extends Command {
                 for (StructureDescriptor i : currentStructures){
                     if (i.getName().equals(args[1])){
                         currentStruct = i;
-                        out.printf(i.getConstants());
+                        out.println(i.getConstants());
                     }
                 }
                 if (currentStruct == null){ //put outside loop
