@@ -52,7 +52,7 @@ public class ShowFlags extends Command {
             //out.printf("The possible structures: "+ currentStructures);
 
             //If 1 args is specified, output all the constants of that structure
-            if (args.length > 0){
+            if (args.length > 1){
                 for (StructureDescriptor i : currentStructures)(){
                     if (i.getName().equals(args[1])){
                         currentStruct = i;
@@ -63,7 +63,7 @@ public class ShowFlags extends Command {
                 }
             }
             //If 2 args are specified, output the value corresponding to args[2]
-            if (args.length > 1){
+            if (args.length > 2){
                 for (ConstantDescriptor j : currentStruct.getConstants()){ 
                     if (j.getName().equals(args[2])){
                         out.printf(j.getName() + ": " + j.getValue());
