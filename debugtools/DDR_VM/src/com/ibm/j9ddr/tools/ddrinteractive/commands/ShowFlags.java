@@ -58,6 +58,7 @@ public class ShowFlags extends Command {
                         currentStruct = i;
                         out.printf(i.getConstants());
                     }
+                }
                 if (currentStruct == null){ //put outside loop
                     out.printf("That structure does not exist");
                 }
@@ -70,7 +71,8 @@ public class ShowFlags extends Command {
                     }
                 }
             }
-                
+        } catch (CorruptDataException e) {
+			throw new DDRInteractiveCommandException(e);
         }
     }
 }
