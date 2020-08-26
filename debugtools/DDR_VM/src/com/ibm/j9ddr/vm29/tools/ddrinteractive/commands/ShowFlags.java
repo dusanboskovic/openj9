@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.j9ddr.tools.ddrinteractive.commands;
+package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 
 import java.io.PrintStream;
 import java.util.Collection;
@@ -29,7 +29,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
-import com.ibm.j9ddr.CorruptDataException;
 
 
 
