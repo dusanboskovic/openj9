@@ -41,40 +41,42 @@ public class ShowFlags extends Command {
     }
 
     public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {
-        try{
-            if (args.length > 2) { //rectify 
-                out.println("ShowFlags expects 2 arguments or less");
-                return;
-            }
-
-            StructureDescriptor currentStruct = null;
-            Collection<StructureDescriptor> currentStructures = context.vmData.getStructures();
-
-            //If no arguments are specified, output all the structures
-            //out.printf("The possible structures: "+ currentStructures);
-
-            //If 1 args is specified, output all the constants of that structure
-            if (args.length > 1){
-                for (StructureDescriptor i : currentStructures){
-                    if (i.getName().equals(args[1])){
-                        currentStruct = i;
-                        out.println(i.getConstants());
-                    }
-                }
-                if (currentStruct == null){ //put outside loop
-                    out.printf("That structure does not exist");
-                }
-            }
-            //If 2 args are specified, output the value corresponding to args[2]
-            if (args.length > 2){
-                for (ConstantDescriptor j : currentStruct.getConstants()){ 
-                    if (j.getName().equals(args[2])){
-                        out.printf(j.getName() + ": " + j.getValue());
-                    }
-                }
-            }
-        } catch (CorruptDataException e) {
-			throw new DDRInteractiveCommandException(e);
+        //try{
+        if (args.length > 2) { //rectify 
+            out.println("ShowFlags expects 2 arguments or less");
+            return;
         }
+
+        StructureDescriptor currentStruct = null;
+        Collection<StructureDescriptor> currentStructures = context.vmData.getStructures();
+
+        //If no arguments are specified, output all the structures
+        if (args.length == 1) {
+            out.printf("The possible structures: "+ currentStructures);
+        }
+
+        //If 1 args is specified, output all the constants of that structure
+        if (args.length > 1){
+            for (StructureDescriptor i : currentStructures){
+                if (i.getName().equals(args[1])){
+                    currentStruct = i;
+                    out.println(i.getConstants());
+                }
+            }
+            if (currentStruct == null){ //put outside loop
+                out.printf("That structure does not exist");
+            }
+        }
+        //If 2 args are specified, output the value corresponding to args[2]
+        if (args.length > 2){
+            for (ConstantDescriptor j : currentStruct.getConstants()){ 
+                if (j.getName().equals(args[2])){
+                    out.printf(j.getName() + ": " + j.getValue());
+                }
+            }
+        }
+        //} catch (CorruptDataException e) {
+		//	throw new DDRInteractiveCommandException(e);
+        //}
     }
 }
