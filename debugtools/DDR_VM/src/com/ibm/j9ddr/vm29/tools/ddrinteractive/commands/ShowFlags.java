@@ -51,7 +51,7 @@ public class ShowFlags extends Command {
 
         //If no arguments are specified, output all the structures
         if (args.length == 0) {
-            out.println("Possible flag groupins");
+            out.println("Possible flag groupings");
             for (StructureDescriptor i : currentStructures){
                 if (i.getName().equalsIgnoreCase("flags")){
                     out.println(currentStructures);
