@@ -568,7 +568,12 @@ public class StructureReader {
 		}
 
 		public String toString() {
-			return name + " extends " + superName;
+			if (superName != null && !superName.isEmpty()){
+				return name + " extends " + superName;
+			}
+			else {
+				return name;
+			}
 		}
 
 		public String getPointerName() {
