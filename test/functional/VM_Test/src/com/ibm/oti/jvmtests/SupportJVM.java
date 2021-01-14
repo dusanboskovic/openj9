@@ -25,8 +25,10 @@ package com.ibm.oti.jvmtests;
 
 public class SupportJVM {
 	public native static long GetNanoTimeAdjustment(long time);
-	
+	public native static String GetSystemPackage(String pkgName);
 	static {
-		System.loadLibrary("j9vmtest");
+			System.out.println("************ENTERED****************");
+			SupportJVM.GetSystemPackage("java/lang/reflect/");
+			System.loadLibrary("j9vmtest");
 	}
 }
