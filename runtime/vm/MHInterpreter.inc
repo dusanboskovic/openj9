@@ -620,6 +620,11 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			Assert_VM_unreachable();
 			break;
 		}
+		
+		Trc_VM_methodHandleCompiledEntryPoint_MH2(_currentThread, methodHandle);
+		if (NULL == methodHandle) {
+			*(int *)-1 = 0x321;
+		}
 		void * compiledEntryPoint = VM_VMHelpers::methodHandleCompiledEntryPoint(_vm, _currentThread, methodHandle);
 		if (NULL != compiledEntryPoint) {
 			_currentThread->tempSlot = (UDATA)methodHandle;

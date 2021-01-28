@@ -1006,6 +1006,7 @@ obj:
 				J9VMJAVALANGINVOKEMETHODHANDLE_SET_INVOCATIONCOUNT(_currentThread, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_INVOCATIONCOUNT(_currentThread, methodHandle) + 1);
 				/* Stash MethodHandle into tempSlot where MHInterpreter expects to find it */
 				_currentThread->tempSlot = (UDATA)methodHandle;
+				Trc_VM_runMHFromInterpreter_MH3(_currentThread, methodHandle);
 			}
 		}
 		return rc;
@@ -7990,6 +7991,7 @@ retry:
 			memmove(_sp, _sp + 1, argSlots * sizeof(UDATA));
 			((j9object_t *)_sp)[argSlots] = methodHandle;
 			_currentThread->tempSlot = (UDATA) methodHandle;
+			Trc_VM_runMHFromInterpreter_MH4(_currentThread, methodHandle);
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -8038,6 +8040,7 @@ retry:
 				goto done;
 			}
 			_currentThread->tempSlot = (UDATA) mhReceiver;
+			Trc_VM_runMHFromInterpreter_MH1(_currentThread, mhReceiver);
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -8102,7 +8105,8 @@ retry:
 				}
 				((j9object_t*)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF] = mhReceiver;
 			}
-			_currentThread->tempSlot = (UDATA) mhReceiver;
+			_currentThread->tempSlot = (UDATA)mhReceiver;
+			Trc_VM_runMHFromInterpreter_MH2(_currentThread, mhReceiver);
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -8184,6 +8188,8 @@ done:
 		j9object_t varHandle = ((j9object_t*)_sp)[methodArgCount];
 		UDATA operation = J9_VH_DECODE_ACCESS_MODE(_sendMethod->extra);
 
+		Trc_VM_runMHFromInterpreter_MH5_args1(_currentThread, ramMethodRef, varHandle, operation);
+
 		if (J9_UNEXPECTED(NULL == varHandle)) {
 			rc = THROW_NPE;
 		} else {
@@ -8207,6 +8213,8 @@ done:
 			J9ROMClass *romClass = ramClass->romClass;
 			U_32 index = VM_VMHelpers::lookupVarHandleMethodTypeCacheIndex(romClass, cpIndex);
 			callSiteType = ramClass->varHandleMethodTypes[index];
+
+			Trc_VM_runMHFromInterpreter_MH5_args2(_currentThread, ramClass, index, callSiteType, handleType, methodHandle);
 
 			if (callSiteType != handleType) {
 				/* Generic invoke */
@@ -8233,6 +8241,8 @@ done:
 						goto done;
 					}
 				}
+				Trc_VM_runMHFromInterpreter_MH5_args3(_currentThread, callSiteType, cachedHandleType, methodHandle, cachedHandle);
+
 			}
 
 			/* Replace VarHandle receiver on the stack with the MethodHandle receiver for this operation */
@@ -8244,6 +8254,7 @@ done:
 
 			/* MethodHandle interpretation reads MethodHandle from _currentThread->tempSlot */
 			_currentThread->tempSlot = (UDATA)methodHandle;
+			Trc_VM_runMHFromInterpreter_MH5(_currentThread, methodHandle);
 		}
 done:
 		return rc;
@@ -9505,6 +9516,11 @@ jni:
 runMethodHandle: {
 #if defined(J9VM_OPT_METHOD_HANDLE)
 	j9object_t methodHandle = (j9object_t)_currentThread->tempSlot;
+	Trc_VM_methodHandleCompiledEntryPoint_MH1(_currentThread, methodHandle);
+	if (NULL == methodHandle) {
+		updateVMStruct(REGISTER_ARGS);
+		*(int *)-1 = 0x321;
+	}
 	void *compiledEntryPoint = VM_VMHelpers::methodHandleCompiledEntryPoint(_vm, _currentThread, methodHandle);
 	if (NULL != compiledEntryPoint) {
 		_currentThread->floatTemp1 = compiledEntryPoint;
