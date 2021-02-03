@@ -82,6 +82,7 @@ j9gc_modron_global_collect_with_overrides(J9VMThread *vmThread, U_32 gcCode)
 
 	if ((J9MMCONSTANT_EXPLICIT_GC_SYSTEM_GC == gcCode) || (J9MMCONSTANT_EXPLICIT_GC_NOT_AGGRESSIVE == gcCode)) {
 		if(MM_GCExtensions::getExtensions(env)->disableExplicitGC) {
+			*(int *)-1=0x321;
 			return 0;
 		}
 	}
